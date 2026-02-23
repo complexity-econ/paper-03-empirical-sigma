@@ -20,8 +20,8 @@ __pycache__/
 *.toc
 *-blx.bib
 
-# Compiled PDF (rebuild with: cd latex && xelatex paper_en && bibtex paper_en && xelatex paper_en × 2)
-latex/*.pdf
+# Compiled PDFs (except final paper)
+# latex/*.pdf
 
 # Symlinked figures in latex/
 latex/figures/
