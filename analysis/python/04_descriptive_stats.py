@@ -57,21 +57,31 @@ def summary_table(panel: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def fig_robot_density_trends(panel: pd.DataFrame):
-    """Figure 1: Robot density trends by ABM sector."""
+def fig_automation_capital_trends(panel: pd.DataFrame):
+    """Figure 1: ICT capital intensity trends by ABM sector."""
     fig, ax = plt.subplots(figsize=FIG_SIZE_WIDE)
+
+    # Use K_L (automation capital per employee) where available
+    col = "K_L" if panel["K_L"].notna().any() else "K_ict"
+    ylabel = "Automation Capital per Employee (K/L)" if col == "K_L" else "ICT CAPEX"
 
     for sector in ABM_SECTORS:
         sub = panel[panel["sector_abm"] == sector]
-        if sub.empty or sub["K_robot"].isna().all():
+        vals = sub.dropna(subset=[col])
+        if vals.empty:
             continue
-        ts = sub.groupby("year")["K_robot"].mean()
+        ts = vals.groupby("year")[col].mean()
+        # Filter to years with reasonable coverage (>5 countries)
+        counts = vals.groupby("year")[col].count()
+        ts = ts[counts >= 5]
+        if ts.empty:
+            continue
         ax.plot(ts.index, ts.values, label=sector,
                 color=SECTOR_COLORS[sector], linewidth=2)
 
     ax.set_xlabel("Year")
-    ax.set_ylabel("Robot density (per 10k employees)")
-    ax.set_title("Robot Density by ABM Sector (OECD Mean)")
+    ax.set_ylabel(ylabel)
+    ax.set_title("Automation Capital Intensity by ABM Sector (OECD Mean)")
     ax.legend(loc="upper left", frameon=False)
     ax.xaxis.set_major_locator(mticker.MaxNLocator(integer=True))
     fig.tight_layout()
@@ -107,15 +117,16 @@ def fig_kl_ratios(panel: pd.DataFrame):
     axes[0].set_title("(a) Labor Productivity (Y/L)")
     axes[0].tick_params(axis="x", rotation=30)
 
-    # Panel B: K/L (automation intensity)
+    # Panel B: K/L (automation intensity) — filter to positive values, log scale
     data_kl = []
     labels_kl = []
     colors_kl = []
     for sector in ABM_SECTORS:
         sub = panel[panel["sector_abm"] == sector]
         vals = sub["K_L"].dropna()
+        vals = vals[vals > 0]  # exclude zero/negative
         if len(vals) > 0:
-            data_kl.append(vals.values)
+            data_kl.append(np.log10(vals.values))
             labels_kl.append(sector.replace("/", "/\n"))
             colors_kl.append(SECTOR_COLORS[sector])
 
@@ -125,7 +136,7 @@ def fig_kl_ratios(panel: pd.DataFrame):
         for patch, color in zip(bp2["boxes"], colors_kl):
             patch.set_facecolor(color)
             patch.set_alpha(0.6)
-    axes[1].set_ylabel("Automation Capital per Employee")
+    axes[1].set_ylabel("log₁₀(Automation Capital per Employee)")
     axes[1].set_title("(b) Automation Intensity (K/L)")
     axes[1].tick_params(axis="x", rotation=30)
 
@@ -141,6 +152,6 @@ if __name__ == "__main__":
     print("Paper-03: Descriptive statistics...")
     panel = load_panel()
     summary_table(panel)
-    fig_robot_density_trends(panel)
+    fig_automation_capital_trends(panel)
     fig_kl_ratios(panel)
     print("Done.")

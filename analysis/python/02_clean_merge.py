@@ -71,16 +71,18 @@ def build_oecd_panel() -> pd.DataFrame:
     emp = load_stan_csv("stan_employment.csv")
     gfcf = load_stan_csv("stan_gross_fixed_capital.csv")
     labr = load_stan_csv("stan_labor_compensation.csv")
+    ict_gfcf = load_stan_csv("stan_ict_gfcf.csv")
 
     # Tag variables
-    for df, name in [(va, "Y"), (emp, "L"), (gfcf, "GFCF"), (labr, "LABR")]:
+    for df, name in [(va, "Y"), (emp, "L"), (gfcf, "GFCF"), (labr, "LABR"),
+                     (ict_gfcf, "K_ict_oecd")]:
         if not df.empty:
             df.rename(columns={"value": name}, inplace=True)
 
     # Merge on (country, year, isic)
     keys = ["country", "year", "isic"]
     panel = va
-    for df in [emp, gfcf, labr]:
+    for df in [emp, gfcf, labr, ict_gfcf]:
         if not df.empty:
             panel = panel.merge(df, on=keys, how="outer")
 
@@ -97,7 +99,8 @@ def build_oecd_panel() -> pd.DataFrame:
     panel = (
         panel
         .groupby(["country", "year", "sector_abm"], as_index=False)
-        .agg({"Y": "sum", "L": "sum", "GFCF": "sum", "LABR": "sum"})
+        .agg({c: "sum" for c in ["Y", "L", "GFCF", "LABR", "K_ict_oecd"]
+              if c in panel.columns})
     )
 
     # Derived variables
@@ -197,7 +200,19 @@ def load_eurostat_ict() -> pd.DataFrame:
     df = df.dropna(subset=["year", "K_ict"])
     df["year"] = df["year"].astype(int)
 
-    print(f"  Eurostat ICT: {len(df)} rows")
+    # Map NACE Rev.2 codes to ABM sectors (same letters as ISIC)
+    nace_col = "nace" if "nace" in df.columns else "nace_r2" if "nace_r2" in df.columns else None
+    if nace_col:
+        df["isic_section"] = df[nace_col].str.extract(ISIC_SECTION_PATTERN)
+        df["sector_abm"] = df["isic_section"].map(map_isic_to_abm)
+        df = df.dropna(subset=["sector_abm"])
+        df = (
+            df
+            .groupby(["country", "year", "sector_abm"], as_index=False)
+            ["K_ict"].sum()
+        )
+
+    print(f"  Eurostat ICT: {len(df)} rows, {df['country'].nunique()} countries")
     return df
 
 
@@ -284,16 +299,22 @@ def merge_panels():
     else:
         panel["K_robot"] = np.nan
 
-    # Merge ICT CAPEX (if mappable)
+    # Merge Eurostat ICT CAPEX (if mappable)
     ict = load_eurostat_ict()
     if not ict.empty and "sector_abm" in ict.columns:
         panel = panel.merge(
-            ict[["country", "year", "sector_abm", "K_ict"]],
+            ict[["country", "year", "sector_abm", "K_ict"]].rename(
+                columns={"K_ict": "K_ict_eurostat"}),
             on=["country", "year", "sector_abm"],
             how="left",
         )
     else:
-        panel["K_ict"] = np.nan
+        panel["K_ict_eurostat"] = np.nan
+
+    # K_ict: prefer OECD STAN ICT GFCF (built into panel), fill gaps with Eurostat
+    if "K_ict_oecd" not in panel.columns:
+        panel["K_ict_oecd"] = np.nan
+    panel["K_ict"] = panel["K_ict_oecd"].fillna(panel.get("K_ict_eurostat", np.nan))
 
     # Composite automation capital: K_auto = K_robot + K_ict (where available)
     panel["K_auto"] = panel[["K_robot", "K_ict"]].sum(axis=1, min_count=1)
