@@ -7,6 +7,7 @@ authors:
     given-names: Mateusz
 version: 1.0.0
 date-released: 2026-02-23
+doi: 10.5281/zenodo.18743780
 license: MIT
 repository-code: https://github.com/complexity-econ/paper-03-empirical-sigma
 keywords:
