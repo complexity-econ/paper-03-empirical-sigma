@@ -400,14 +400,16 @@ The two methods produce broadly consistent results, with Bayesian estimates slig
 \label{fig:comparison}
 \end{figure}
 
-\subsection{OECD vs Poland}
+\subsection{Calibrated vs Empirical: All Methods}
 
-Figure~\ref{fig:oecdpl} compares OECD pooled estimates with Poland-specific estimates from GUS BDL data.
+Figure~\ref{fig:oecdpl} compares calibrated $\sigma$ (Papers~01--02) with GMM and Bayesian estimates for all six sectors, with 95\% confidence/credible intervals.
+The Bayesian estimates are systematically lower than GMM for market sectors, reflecting the shrinkage toward meta-analytic priors.
+Manufacturing shows the largest discrepancy between methods ($\hat{\sigma}_{\text{GMM}}=4.88$ vs $\hat{\sigma}_{\text{Bayes}}=2.03$), driven by the informative prior ($\mu=1.5$).
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.8\textwidth]{fig_06_oecd_vs_poland.png}
-\caption{OECD pooled vs Poland-specific $\sigma$ estimates}
+\includegraphics[width=\textwidth]{fig_06_oecd_vs_poland.png}
+\caption{Calibrated vs empirical $\sigma$: all methods with 95\% CI/HDI. Non-market sectors marked ``prior''.}
 \label{fig:oecdpl}
 \end{figure}
 

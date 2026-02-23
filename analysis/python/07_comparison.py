@@ -100,7 +100,7 @@ def build_comparison_table(dfs: dict) -> pd.DataFrame:
 
 def fig_method_comparison(comp: pd.DataFrame):
     """Figure 5: GMM vs Bayesian sigma estimates (scatter + 45-degree line)."""
-    fig, ax = plt.subplots(figsize=FIG_SIZE_WIDE)
+    fig, ax = plt.subplots(figsize=(8, 7))
 
     for sector in ABM_SECTORS:
         row = comp[comp["sector"] == sector].iloc[0]
@@ -108,12 +108,26 @@ def fig_method_comparison(comp: pd.DataFrame):
         bayes = row.get("sigma_bayes_oecd")
         if pd.isna(gmm) or pd.isna(bayes):
             continue
-        ax.scatter(gmm, bayes, s=100, color=SECTOR_COLORS[sector],
-                   edgecolors="black", zorder=5, label=sector)
+        marker = "^" if row.get("source") == "prior-only" else "o"
+        ax.scatter(gmm, bayes, s=140, color=SECTOR_COLORS[sector],
+                   edgecolors="black", zorder=5, label=sector, marker=marker)
+        ax.annotate(sector, (gmm, bayes), textcoords="offset points",
+                    xytext=(8, 6), fontsize=8)
 
-    # 45-degree line
-    lims = ax.get_xlim()
-    ax.plot([0, 100], [0, 100], "k--", alpha=0.3, label="45° line")
+    # 45-degree line — fit to data range
+    vals = []
+    for sector in ABM_SECTORS:
+        row = comp[comp["sector"] == sector].iloc[0]
+        for c in ["sigma_gmm_oecd", "sigma_bayes_oecd"]:
+            v = row.get(c)
+            if not pd.isna(v):
+                vals.append(v)
+    if vals:
+        lo, hi = min(vals) * 0.8, max(vals) * 1.2
+        ax.plot([lo, hi], [lo, hi], "k--", alpha=0.3, label="45° line")
+        ax.set_xlim(lo, hi)
+        ax.set_ylim(lo, hi)
+
     ax.set_xlabel("GMM σ estimate")
     ax.set_ylabel("Bayesian σ estimate")
     ax.set_title("Method Comparison: GMM vs Bayesian")
@@ -128,25 +142,55 @@ def fig_method_comparison(comp: pd.DataFrame):
 
 
 def fig_oecd_vs_poland(comp: pd.DataFrame):
-    """Figure 6: OECD vs Poland sigma estimates."""
+    """Figure 6: Empirical vs calibrated sigma — bar chart with CI error bars."""
     fig, ax = plt.subplots(figsize=FIG_SIZE_WIDE)
 
-    for sector in ABM_SECTORS:
-        row = comp[comp["sector"] == sector].iloc[0]
-        oecd = row.get("sigma_gmm_oecd")
-        pol = row.get("sigma_gmm_poland")
-        if pd.isna(oecd) or pd.isna(pol):
-            continue
-        ax.scatter(oecd, pol, s=100, color=SECTOR_COLORS[sector],
-                   edgecolors="black", zorder=5, label=sector)
+    x = np.arange(len(ABM_SECTORS))
+    width = 0.25
 
-    lims = ax.get_xlim()
-    ax.plot([0, 100], [0, 100], "k--", alpha=0.3, label="45° line")
-    ax.set_xlabel("OECD pooled σ")
-    ax.set_ylabel("Poland-specific σ")
-    ax.set_title("OECD vs Poland: Sector-Level σ Estimates")
-    ax.legend(loc="upper left", frameon=False, fontsize=9)
-    ax.set_aspect("equal", adjustable="datalim")
+    cal_vals = [comp[comp["sector"] == s].iloc[0]["sigma_calibrated"] for s in ABM_SECTORS]
+    gmm_vals = [comp[comp["sector"] == s].iloc[0].get("sigma_gmm_oecd", np.nan) for s in ABM_SECTORS]
+    bayes_vals = [comp[comp["sector"] == s].iloc[0].get("sigma_bayes_oecd", np.nan) for s in ABM_SECTORS]
+
+    gmm_lo = [comp[comp["sector"] == s].iloc[0].get("ci_lo_gmm_oecd", np.nan) for s in ABM_SECTORS]
+    gmm_hi = [comp[comp["sector"] == s].iloc[0].get("ci_hi_gmm_oecd", np.nan) for s in ABM_SECTORS]
+    bayes_lo = [comp[comp["sector"] == s].iloc[0].get("hdi_lo_bayes_oecd", np.nan) for s in ABM_SECTORS]
+    bayes_hi = [comp[comp["sector"] == s].iloc[0].get("hdi_hi_bayes_oecd", np.nan) for s in ABM_SECTORS]
+
+    # GMM error bars
+    gmm_err_lo = [max(0, g - lo) if not pd.isna(g) and not pd.isna(lo) else 0
+                  for g, lo in zip(gmm_vals, gmm_lo)]
+    gmm_err_hi = [hi - g if not pd.isna(g) and not pd.isna(hi) else 0
+                  for g, hi in zip(gmm_vals, gmm_hi)]
+    bayes_err_lo = [max(0, b - lo) if not pd.isna(b) and not pd.isna(lo) else 0
+                    for b, lo in zip(bayes_vals, bayes_lo)]
+    bayes_err_hi = [hi - b if not pd.isna(b) and not pd.isna(hi) else 0
+                    for b, hi in zip(bayes_vals, bayes_hi)]
+
+    sources = [comp[comp["sector"] == s].iloc[0].get("source", "data") for s in ABM_SECTORS]
+
+    ax.bar(x - width, cal_vals, width, label="Calibrated (Papers 01-02)",
+           color="lightcoral", edgecolor="black", alpha=0.7)
+    ax.bar(x, gmm_vals, width, label="GMM / Prior",
+           color="steelblue", edgecolor="black", alpha=0.7,
+           yerr=[gmm_err_lo, gmm_err_hi], capsize=4, error_kw={"linewidth": 1.2})
+    ax.bar(x + width, bayes_vals, width, label="Bayesian / Prior",
+           color="seagreen", edgecolor="black", alpha=0.7,
+           yerr=[bayes_err_lo, bayes_err_hi], capsize=4, error_kw={"linewidth": 1.2})
+
+    # Mark non-market sectors
+    for i, src in enumerate(sources):
+        if src == "prior-only":
+            ax.text(x[i], max(cal_vals[i], gmm_vals[i], bayes_vals[i]) * 1.15,
+                    "prior", ha="center", fontsize=7, color="gray", style="italic")
+
+    ax.set_xticks(x)
+    ax.set_xticklabels([s.replace("/", "/\n") for s in ABM_SECTORS], fontsize=9)
+    ax.set_ylabel("Elasticity of Substitution (σ)")
+    ax.set_title("Calibrated vs Empirical σ: All Methods")
+    ax.set_yscale("log")
+    ax.axhline(y=1.0, color="gray", linestyle="--", alpha=0.5)
+    ax.legend(loc="upper right", frameon=False, fontsize=9)
 
     fig.tight_layout()
     out = FIGURES / "fig_06_oecd_vs_poland.png"
