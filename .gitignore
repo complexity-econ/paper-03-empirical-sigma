@@ -1,0 +1,39 @@
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.bcf
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*-blx.bib
+
+# Compiled PDF (rebuild with: cd latex && xelatex paper_en && bibtex paper_en && xelatex paper_en × 2)
+latex/*.pdf
+
+# Symlinked figures in latex/
+latex/figures/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Data (large, downloaded — reproduce with 01_download_data.py)
+data/raw/
+data/processed/
+
+# Claude
+CLAUDE.md

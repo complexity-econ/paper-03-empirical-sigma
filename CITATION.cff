@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+type: software
+title: "Empirical Estimation of CES Elasticity of Substitution for AI-Augmented Production"
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Maciaszek
+    given-names: Mateusz
+version: 1.0.0
+date-released: 2026-02-23
+license: MIT
+repository-code: https://github.com/complexity-econ/paper-03-empirical-sigma
+keywords:
+  - CES production function
+  - elasticity of substitution
+  - GMM estimation
+  - Bayesian estimation
+  - automation
+  - robot density
+  - agent-based model
+  - complexity economics
