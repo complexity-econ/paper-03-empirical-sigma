@@ -1,6 +1,7 @@
 # Empirical Estimation of CES Elasticity of Substitution
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.18743780.svg)](https://doi.org/10.5281/zenodo.18743780)
+[**Read the paper (PDF)**](latex/paper_en.pdf)
 
 **Paper-03** in the complexity-econ series: estimates sector-specific CES elasticity of substitution ($\sigma$) from OECD panel data + Polish GUS data, then tests whether Paper-01's key findings survive with empirically grounded parameters.
 
