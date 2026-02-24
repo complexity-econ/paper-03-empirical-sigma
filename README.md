@@ -95,4 +95,6 @@ MIT
 
 - [Paper-01: The Acceleration Paradox](https://github.com/complexity-econ/paper-01-acceleration-paradox)
 - [Paper-02: Monetary Regimes](https://github.com/complexity-econ/paper-02-monetary-regimes)
+- [Paper-04: Phase Diagram & Universality](https://github.com/complexity-econ/paper-04-phase-diagram)
+- [Paper-05: Endogenous Technology & Networks](https://github.com/complexity-econ/paper-05-endogenous)
 - [Core engine](https://github.com/complexity-econ/core)
