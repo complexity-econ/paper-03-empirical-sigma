@@ -49,6 +49,44 @@ simulations/scripts/    ABM sensitivity runner
 - **Simulation**: [complexity-econ/core](https://github.com/complexity-econ/core) (Scala 3.5.2, sbt)
 - **Paper**: XeLaTeX + biblatex
 
+## Figures
+
+### Descriptive Statistics
+
+![trends](figures/fig_01_robot_density_trends.png)
+**Fig 1.** Automation capital intensity (K/L) trends by sector across OECD countries, 2000–2023. BPO/SSC and Manufacturing show steep growth; Healthcare and Public remain flat.
+
+![kl_ratios](figures/fig_02_kl_ratios.png)
+**Fig 2.** Cross-sectional distributions of labor productivity (Y/L) and automation intensity (K/L) by sector. Box plots reveal massive heterogeneity — BPO/SSC spans three orders of magnitude in K/L.
+
+### GMM Estimation
+
+![gmm_forest](figures/fig_03_gmm_forest.png)
+**Fig 3.** Forest plot of GMM σ estimates with 95% CI. Empirical values (circles) are 5–9× lower than calibrated values (diamonds) for market sectors. Non-market sectors (Healthcare, Public) are prior-only — SNA cost convention makes σ unidentifiable.
+
+### Bayesian Estimation
+
+![posteriors](figures/fig_04_bayesian_posteriors.png)
+**Fig 4.** Posterior distributions from hierarchical Bayesian model (PyMC). Market sectors show tight posteriors consistent with GMM; non-market sectors show prior-only distributions (dashed lines).
+
+### Method Comparison
+
+![comparison](figures/fig_05_method_comparison.png)
+**Fig 5.** GMM vs Bayesian σ scatter plot. Points hug the 45° line — both methods agree closely, validating the estimates. Market sectors (circles) cluster near σ = 1–9; non-market (triangles) are fixed at priors.
+
+![oecd_vs_poland](figures/fig_06_oecd_vs_poland.png)
+**Fig 6.** All three σ estimates side by side (calibrated, GMM, Bayesian) for each sector. The gap between calibrated and empirical values is striking — especially for BPO/SSC (50 vs 9) and Manufacturing (10 vs 5).
+
+### Recommended σ Values
+
+![threshold](figures/fig_07_threshold_mapping.png)
+**Fig 7.** Calibrated vs recommended σ for ABM simulations. Market sectors use GMM estimates; non-market sectors retain literature priors. This is the prescription carried forward into Papers 04–05.
+
+### ABM Sensitivity
+
+![sensitivity](figures/fig_08_abm_sensitivity.png)
+**Fig 8.** Adoption distributions at BDP = 2000 PLN under four σ scenarios (calibrated, empirical, low CI, high CI). The core finding: a 5–9× change in σ shifts adoption by only 1.5 pp — monetary regime matters far more than σ calibration.
+
 ## License
 
 MIT
